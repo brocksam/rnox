@@ -220,10 +220,12 @@ impl Scanner {
 #[cfg(test)]
 mod tests {
 
+    use super::*;
+
     macro_rules! repl_single_lexeme_tests {
         ($($name:ident: $value:expr,)*) => {
             $(
-                use super::*;
+                
 
                 #[test]
                 fn $name() {
