@@ -69,8 +69,8 @@ pub struct Token {
 }
 
 impl Token {
-    pub fn new(token_type: TokenType, lexeme: String, literal: Literal, line: usize) -> Self {
-        Self { token_type, lexeme, literal: Some(literal), line }
+    pub fn new(token_type: TokenType, lexeme: String, literal: Option<Literal>, line: usize) -> Self {
+        Self { token_type, lexeme, literal: literal, line }
     }
 
     #[allow(dead_code)]
