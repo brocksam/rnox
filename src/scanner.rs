@@ -281,6 +281,9 @@ mod tests {
         repl_small_float: ("0.0000001\n", TokenType::Number, "0.0000001", Some(Literal::Number(0.0000001))),
 
         // String literals
+        repl_single_string: ("\"a\"\n", TokenType::String, "\"a\"", Some(Literal::String("a".to_string()))),
+        repl_multiple_string: ("\"abyz\"\n", TokenType::String, "\"abyz\"", Some(Literal::String("abyz".to_string()))),
+        repl_whitespace_string: ("\" \"\n", TokenType::String, "\" \"", Some(Literal::String(" ".to_string()))),
 
         // Identifier literals
         repl_lowercase_single_identifier: ("a\n", TokenType::Identifier, "a", Some(Literal::Identifier("a".to_string()))),
@@ -307,5 +310,29 @@ mod tests {
         repl_true: ("true\n", TokenType::True, "true", None),
         repl_var: ("var\n", TokenType::Var, "var", None),
         repl_while: ("while\n", TokenType::While, "while", None),
+    }
+
+    #[test]
+    fn test_multiline_string() {
+        let source = "\"\n \nabcd\nABCD\n \"\n";
+        let lexeme = "\"\n \nabcd\nABCD\n \"";
+        let literal = Some(Literal::String("\n \nabcd\nABCD\n ".to_string()));
+        let mut scanner = Scanner::new(source.to_string());
+        let tokens = scanner.scan_tokens();
+        let expected = vec![
+            Token::new(
+                TokenType::String,
+                lexeme.to_string(),
+                literal,
+                5,
+            ),
+            Token::new(
+                TokenType::EndOfFile,
+                "".to_string(),
+                None,
+                6,
+            ),
+        ];
+        assert_eq!(tokens, &expected);
     }
 }
