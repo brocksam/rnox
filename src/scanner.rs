@@ -32,7 +32,7 @@ impl Scanner {
         self.tokens.push(Token::new(
             TokenType::EndOfFile,
             String::from(""),
-            Literal::String(String::from("")),
+            None,
             self.line),
         );
         &self.tokens
@@ -129,7 +129,11 @@ impl Scanner {
             "while" => TokenType::While,
             _ => TokenType::Identifier,
         }; 
-        self.add_token_without_literal(token_type);
+        if token_type == TokenType::Identifier {
+            self.add_token(token_type, Some(Literal::Identifier(text.to_string())));
+        } else {
+            self.add_token_without_literal(token_type);
+        }
     }
 
     fn number(&mut self) {
@@ -142,7 +146,7 @@ impl Scanner {
                 self.advance();
             }
         }
-        self.add_token(TokenType::Number, Literal::Number(self.source[self.start..self.current].parse().unwrap()));
+        self.add_token(TokenType::Number, Some(Literal::Number(self.source[self.start..self.current].parse().unwrap())));
 
     }
 
@@ -161,7 +165,7 @@ impl Scanner {
         self.advance();
 
         let value = &self.source[self.start + 1..self.current - 1];
-        self.add_token(TokenType::String, Literal::String(value.to_string()));
+        self.add_token(TokenType::String, Some(Literal::String(value.to_string())));
     }
 
     fn advance(&mut self) -> char {
@@ -196,11 +200,10 @@ impl Scanner {
     }
 
     fn add_token_without_literal(&mut self, token_type: TokenType) {
-        // TODO: add Literal value to represent to literal value
-        self.add_token(token_type, Literal::String(String::new()));
+        self.add_token(token_type, None);
     }
 
-    fn add_token(&mut self, token_type: TokenType, literal: Literal) {
+    fn add_token(&mut self, token_type: TokenType, literal: Option<Literal>) {
         let text = &self.source[self.start..self.current];
         self.tokens.push(Token::new(token_type, text.to_string(), literal, self.line));
     }
@@ -218,24 +221,23 @@ mod tests {
     macro_rules! repl_single_token_tests {
         ($($name:ident: $value:expr,)*) => {
             $(
-                
 
                 #[test]
                 fn $name() {
-                    let (source, token_type, lexeme) = $value;
+                    let (source, token_type, lexeme, literal) = $value;
                     let mut scanner = Scanner::new(source.to_string());
                     let tokens = scanner.scan_tokens();
                     let expected = vec![
                         Token::new(
                             token_type,
                             lexeme.to_string(),
-                            Literal::String("".to_string()),
+                            literal,
                             1,
                         ),
                         Token::new(
                             TokenType::EndOfFile,
                             "".to_string(),
-                            Literal::String("".to_string()),
+                            None,
                             2,
                         ),
                     ];
@@ -247,44 +249,63 @@ mod tests {
 
     repl_single_token_tests! {
         // Single-character tokens
-        repl_left_paren: ("(\n", TokenType::LeftParen, "("),
-        repl_right_paren: (")\n", TokenType::RightParen, ")"),
-        repl_left_brace: ("{\n", TokenType::LeftBrace, "{"),
-        repl_right_brace: ("}\n", TokenType::RightBrace, "}"),
-        repl_comma: (",\n", TokenType::Comma, ","),
-        repl_dot: (".\n", TokenType::Dot, "."),
-        repl_minus: ("-\n", TokenType::Minus, "-"),
-        repl_plus: ("+\n", TokenType::Plus, "+"),
-        repl_semicolon: (";\n", TokenType::Semicolon, ";"),
-        repl_slash: ("/\n", TokenType::Slash, "/"),
-        repl_star: ("*\n", TokenType::Star, "*"),
+        repl_left_paren: ("(\n", TokenType::LeftParen, "(", None),
+        repl_right_paren: (")\n", TokenType::RightParen, ")", None),
+        repl_left_brace: ("{\n", TokenType::LeftBrace, "{", None),
+        repl_right_brace: ("}\n", TokenType::RightBrace, "}", None),
+        repl_comma: (",\n", TokenType::Comma, ",", None),
+        repl_dot: (".\n", TokenType::Dot, ".", None),
+        repl_minus: ("-\n", TokenType::Minus, "-", None),
+        repl_plus: ("+\n", TokenType::Plus, "+", None),
+        repl_semicolon: (";\n", TokenType::Semicolon, ";", None),
+        repl_slash: ("/\n", TokenType::Slash, "/", None),
+        repl_star: ("*\n", TokenType::Star, "*", None),
 
         // One or two character tokens
-        repl_bang: ("!\n", TokenType::Bang, "!"),
-        repl_bang_equal: ("!=\n", TokenType::BangEqual, "!="),
-        repl_equal: ("=\n", TokenType::Equal, "="),
-        repl_equal_equal: ("==\n", TokenType::EqualEqual, "=="),
-        repl_greater: (">\n", TokenType::Greater, ">"),
-        repl_greater_equal: (">=\n", TokenType::GreaterEqual, ">="),
-        repl_less: ("<\n", TokenType::Less, "<"),
-        repl_less_equal: ("<=\n", TokenType::LessEqual, "<="),
+        repl_bang: ("!\n", TokenType::Bang, "!", None),
+        repl_bang_equal: ("!=\n", TokenType::BangEqual, "!=", None),
+        repl_equal: ("=\n", TokenType::Equal, "=", None),
+        repl_equal_equal: ("==\n", TokenType::EqualEqual, "==", None),
+        repl_greater: (">\n", TokenType::Greater, ">", None),
+        repl_greater_equal: (">=\n", TokenType::GreaterEqual, ">=", None),
+        repl_less: ("<\n", TokenType::Less, "<", None),
+        repl_less_equal: ("<=\n", TokenType::LessEqual, "<=", None),
+
+        // Number literals
+        repl_zero_int: ("0\n", TokenType::Number, "0", Some(Literal::Number(0.0))),
+        repl_zero_float: ("0.0\n", TokenType::Number, "0.0", Some(Literal::Number(0.0))),
+        repl_one_int: ("1\n", TokenType::Number, "1", Some(Literal::Number(1.0))),
+        repl_one_float: ("1.0\n", TokenType::Number, "1.0", Some(Literal::Number(1.0))),
+        repl_large_int: ("999999\n", TokenType::Number, "999999", Some(Literal::Number(999999.0))),
+        repl_large_float: ("999999.0\n", TokenType::Number, "999999.0", Some(Literal::Number(999999.0))),
+        repl_small_float: ("0.0000001\n", TokenType::Number, "0.0000001", Some(Literal::Number(0.0000001))),
+
+        // String literals
+
+        // Identifier literals
+        repl_lowercase_single_identifier: ("a\n", TokenType::Identifier, "a", Some(Literal::Identifier("a".to_string()))),
+        repl_uppercase_single_identifier: ("A\n", TokenType::Identifier, "A", Some(Literal::Identifier("A".to_string()))),
+        repl_underscore_single_identifier: ("_\n", TokenType::Identifier, "_", Some(Literal::Identifier("_".to_string()))),
+        repl_lowercase_multiple_identifier: ("abyz\n", TokenType::Identifier, "abyz", Some(Literal::Identifier("abyz".to_string()))),
+        repl_uppercase_multiple_identifier: ("ABYZ\n", TokenType::Identifier, "ABYZ", Some(Literal::Identifier("ABYZ".to_string()))),
+        repl_underscore_multiple_identifier: ("_abyz_ABYZ\n", TokenType::Identifier, "_abyz_ABYZ", Some(Literal::Identifier("_abyz_ABYZ".to_string()))),
 
         // Keywords
-        repl_and: ("and\n", TokenType::And, "and"),
-        repl_class: ("class\n", TokenType::Class, "class"),
-        repl_else: ("else\n", TokenType::Else, "else"),
-        repl_false: ("false\n", TokenType::False, "false"),
-        repl_for: ("for\n", TokenType::For, "for"),
-        repl_fun: ("fun\n", TokenType::Fun, "fun"),
-        repl_if: ("if\n", TokenType::If, "if"),
-        repl_nil: ("nil\n", TokenType::Nil, "nil"),
-        repl_or: ("or\n", TokenType::Or, "or"),
-        repl_print: ("print\n", TokenType::Print, "print"),
-        repl_return: ("return\n", TokenType::Return, "return"),
-        repl_super: ("super\n", TokenType::Super, "super"),
-        repl_this: ("this\n", TokenType::This, "this"),
-        repl_true: ("true\n", TokenType::True, "true"),
-        repl_var: ("var\n", TokenType::Var, "var"),
-        repl_while: ("while\n", TokenType::While, "while"),
+        repl_and: ("and\n", TokenType::And, "and", None),
+        repl_class: ("class\n", TokenType::Class, "class", None),
+        repl_else: ("else\n", TokenType::Else, "else", None),
+        repl_false: ("false\n", TokenType::False, "false", None),
+        repl_for: ("for\n", TokenType::For, "for", None),
+        repl_fun: ("fun\n", TokenType::Fun, "fun", None),
+        repl_if: ("if\n", TokenType::If, "if", None),
+        repl_nil: ("nil\n", TokenType::Nil, "nil", None),
+        repl_or: ("or\n", TokenType::Or, "or", None),
+        repl_print: ("print\n", TokenType::Print, "print", None),
+        repl_return: ("return\n", TokenType::Return, "return", None),
+        repl_super: ("super\n", TokenType::Super, "super", None),
+        repl_this: ("this\n", TokenType::This, "this", None),
+        repl_true: ("true\n", TokenType::True, "true", None),
+        repl_var: ("var\n", TokenType::Var, "var", None),
+        repl_while: ("while\n", TokenType::While, "while", None),
     }
 }
