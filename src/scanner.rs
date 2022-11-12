@@ -255,5 +255,14 @@ mod tests {
     repl_single_lexeme_tests! {
         repl_left_paren: ("(\n", TokenType::LeftParen, "("),
         repl_right_paren: (")\n", TokenType::RightParen, ")"),
+        repl_left_brace: ("{\n", TokenType::LeftBrace, "{"),
+        repl_right_brace: ("}\n", TokenType::RightBrace, "}"),
+        repl_comma: (",\n", TokenType::Comma, ","),
+        repl_dot: (".\n", TokenType::Dot, "."),
+        repl_minus: ("-\n", TokenType::Minus, "-"),
+        repl_plus: ("+\n", TokenType::Plus, "+"),
+        repl_semicolon: (";\n", TokenType::Semicolon, ";"),
+        repl_slash: ("/\n", TokenType::Slash, "/"),
+        repl_star: ("*\n", TokenType::Star, "*"),
     }
 }
