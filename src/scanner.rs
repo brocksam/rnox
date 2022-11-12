@@ -222,7 +222,7 @@ mod tests {
 
     use super::*;
 
-    macro_rules! repl_single_lexeme_tests {
+    macro_rules! repl_single_token_tests {
         ($($name:ident: $value:expr,)*) => {
             $(
                 
@@ -252,7 +252,7 @@ mod tests {
         }
     }
 
-    repl_single_lexeme_tests! {
+    repl_single_token_tests! {
         // Single-character tokens
         repl_left_paren: ("(\n", TokenType::LeftParen, "("),
         repl_right_paren: (")\n", TokenType::RightParen, ")"),
