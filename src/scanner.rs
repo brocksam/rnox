@@ -87,29 +87,27 @@ impl Scanner {
         }
     }
 
-    fn is_digit(&self, c: char) -> bool {
+    fn is_digit(&self, c: &char) -> bool {
         match c {
             '0'..='9' => true,
             _ => false,
         }
     }
 
-    fn is_alpha(&self, c: char) -> bool {
+    fn is_alpha(&self, c: &char) -> bool {
         match c {
             'a'..='z' | 'A'..='Z' | '_' => true,
             _ => false,
         }
     }
 
-    fn is_alpha_numeric(&self, c: char) -> bool {
+    fn is_alpha_numeric(&self, c: &char) -> bool {
         self.is_alpha(c) || self.is_digit(c)
     }
 
     fn identifier(&mut self) {
-        let c = self.peek();
-        while self.is_alpha_numeric(c) {
+        while self.is_alpha_numeric(&self.peek()) {
             self.advance();
-            let c = self.peek();
         }
         let text = &self.source[self.start..self.current];
         let token_type = match text {
@@ -135,18 +133,13 @@ impl Scanner {
     }
 
     fn number(&mut self) {
-        let c = self.peek();
-        while self.is_digit(c) {
+        while self.is_digit(&self.peek()) {
             self.advance();
-            let c = self.peek();
         }
-        let next_c = self.peek_next();
-        if self.peek() == '.' && self.is_digit(next_c) {
+        if self.peek() == '.' && self.is_digit(&self.peek_next()) {
             self.advance();
-            let c = self.peek();
-            while self.is_digit(c) {
+            while self.is_digit(&self.peek()) {
                 self.advance();
-                let c = self.peek();
             }
         }
         self.add_token(TokenType::Number, Literal::Number(self.source[self.start..self.current].parse().unwrap()));
@@ -188,14 +181,14 @@ impl Scanner {
         true
     }
 
-    fn peek(&mut self) -> char {
+    fn peek(&self) -> char {
         if self.is_at_end() {
             return '\0';
         }
         self.source.chars().nth(self.current).unwrap()
     }
 
-    fn peek_next(&mut self) -> char {
+    fn peek_next(&self) -> char {
         if self.current + 1 >= self.source.len() {
             return '\0';
         }
