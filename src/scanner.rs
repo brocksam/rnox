@@ -253,6 +253,7 @@ mod tests {
     }
 
     repl_single_lexeme_tests! {
+        // Single-character tokens
         repl_left_paren: ("(\n", TokenType::LeftParen, "("),
         repl_right_paren: (")\n", TokenType::RightParen, ")"),
         repl_left_brace: ("{\n", TokenType::LeftBrace, "{"),
@@ -264,5 +265,15 @@ mod tests {
         repl_semicolon: (";\n", TokenType::Semicolon, ";"),
         repl_slash: ("/\n", TokenType::Slash, "/"),
         repl_star: ("*\n", TokenType::Star, "*"),
+
+        // One or two character tokens
+        repl_bang : ("!\n", TokenType::Bang, "!"),
+        repl_bang_equal : ("!=\n", TokenType::BangEqual, "!="),
+        repl_equal : ("=\n", TokenType::Equal, "="),
+        repl_equal_equal : ("==\n", TokenType::EqualEqual, "=="),
+        repl_greater : (">\n", TokenType::Greater, ">"),
+        repl_greater_equal : (">=\n", TokenType::GreaterEqual, ">="),
+        repl_less : ("<\n", TokenType::Less, "<"),
+        repl_less_equal : ("<=\n", TokenType::LessEqual, "<="),
     }
 }
