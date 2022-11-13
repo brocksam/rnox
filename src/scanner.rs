@@ -153,7 +153,7 @@ impl Scanner {
     fn string(&mut self) {
         while self.peek() != '"' && !self.is_at_end() {
             if self.peek() == '\n' {
-                self.line = self.line + 1;
+                self.line += 1;
                 
             }
             self.advance();
@@ -170,7 +170,7 @@ impl Scanner {
 
     fn advance(&mut self) -> char {
         let c = self.source.chars().nth(self.current).unwrap();
-        self.current = self.current + 1;
+        self.current += 1;
         c
     }
 
@@ -181,7 +181,7 @@ impl Scanner {
         if self.source.chars().nth(self.current) != Some(expected) {
             return false;
         }
-        self.current = self.current + 1;
+        self.current += 1;
         true
     }
 
