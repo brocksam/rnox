@@ -70,7 +70,7 @@ pub struct Token {
 
 impl Token {
     pub fn new(token_type: TokenType, lexeme: String, literal: Option<Literal>, line: usize) -> Self {
-        Self { token_type, lexeme, literal: literal, line }
+        Self { token_type, lexeme, literal, line }
     }
 
     #[allow(dead_code)]
