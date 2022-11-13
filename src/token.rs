@@ -72,13 +72,4 @@ impl Token {
     pub fn new(token_type: TokenType, lexeme: String, literal: Option<Literal>, line: usize) -> Self {
         Self { token_type, lexeme, literal, line }
     }
-
-    #[allow(dead_code)]
-    pub fn to_string(&self) -> String {
-        match &self.literal {
-            Some(literal) => format!("{} {} {}", &self.token_type, &self.lexeme, literal),
-            None => format!("{} {}", &self.token_type, &self.lexeme),
-        }
-        
-    }
 }
