@@ -9,7 +9,7 @@ pub enum Literal {
 
 impl fmt::Display for Literal {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match &*self {
+        match self {
             Literal::Identifier(value) => write!(f, "{:?}", value),
             Literal::Number(value) => write!(f, "{:?}", value),
             Literal::String(value) => write!(f, "{:?}", value),
