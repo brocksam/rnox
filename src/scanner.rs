@@ -88,17 +88,11 @@ impl Scanner {
     }
 
     fn is_digit(&self, c: &char) -> bool {
-        match c {
-            '0'..='9' => true,
-            _ => false,
-        }
+        matches!(c, '0'..='9')
     }
 
     fn is_alpha(&self, c: &char) -> bool {
-        match c {
-            'a'..='z' | 'A'..='Z' | '_' => true,
-            _ => false,
-        }
+        matches!(c, 'a'..='z' | 'A'..='Z' | '_')
     }
 
     fn is_alpha_numeric(&self, c: &char) -> bool {
