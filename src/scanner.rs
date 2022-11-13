@@ -1,7 +1,7 @@
 use crate::{
     error,
     literal::Literal,
-    token::{Token, TokenType}
+    token::{Token, TokenType},
 };
 
 pub struct Scanner {
@@ -13,14 +13,13 @@ pub struct Scanner {
 }
 
 impl Scanner {
-
     pub fn new(source: String) -> Self {
         Self {
             source,
             tokens: Vec::new(),
             start: 0,
             current: 0,
-            line: 1, 
+            line: 1,
         }
     }
 
@@ -33,8 +32,8 @@ impl Scanner {
             TokenType::EndOfFile,
             String::from(""),
             None,
-            self.line),
-        );
+            self.line,
+        ));
         &self.tokens
     }
 
@@ -51,35 +50,45 @@ impl Scanner {
             '+' => self.add_token_without_literal(TokenType::Plus),
             ';' => self.add_token_without_literal(TokenType::Semicolon),
             '*' => self.add_token_without_literal(TokenType::Star),
-            '!' => if self.match_next('=') {
-                self.add_token_without_literal(TokenType::BangEqual)
-            } else {
-                self.add_token_without_literal(TokenType::Bang)
-            },
-            '=' => if self.match_next('=') {
-                self.add_token_without_literal(TokenType::EqualEqual)
-            } else {
-                self.add_token_without_literal(TokenType::Equal)
-            },
-            '<' => if self.match_next('=') {
-                self.add_token_without_literal(TokenType::LessEqual)
-            } else {
-                self.add_token_without_literal(TokenType::Less)
-            },
-            '>' => if self.match_next('=') {
-                self.add_token_without_literal(TokenType::GreaterEqual)
-            } else {
-                self.add_token_without_literal(TokenType::Greater)
-            },
-            '/' => if self.match_next('/') {
-                while self.peek() != '\n' && !self.is_at_end() {
-                    self.advance();
+            '!' => {
+                if self.match_next('=') {
+                    self.add_token_without_literal(TokenType::BangEqual)
+                } else {
+                    self.add_token_without_literal(TokenType::Bang)
                 }
-            } else {
-                self.add_token_without_literal(TokenType::Slash)
-            },
-            ' ' | '\r' | '\t' => {},
-            '\n' => { self.line += 1 },
+            }
+            '=' => {
+                if self.match_next('=') {
+                    self.add_token_without_literal(TokenType::EqualEqual)
+                } else {
+                    self.add_token_without_literal(TokenType::Equal)
+                }
+            }
+            '<' => {
+                if self.match_next('=') {
+                    self.add_token_without_literal(TokenType::LessEqual)
+                } else {
+                    self.add_token_without_literal(TokenType::Less)
+                }
+            }
+            '>' => {
+                if self.match_next('=') {
+                    self.add_token_without_literal(TokenType::GreaterEqual)
+                } else {
+                    self.add_token_without_literal(TokenType::Greater)
+                }
+            }
+            '/' => {
+                if self.match_next('/') {
+                    while self.peek() != '\n' && !self.is_at_end() {
+                        self.advance();
+                    }
+                } else {
+                    self.add_token_without_literal(TokenType::Slash)
+                }
+            }
+            ' ' | '\r' | '\t' => {}
+            '\n' => self.line += 1,
             '"' => self.string(),
             '0'..='9' => self.number(),
             'a'..='z' | 'A'..='Z' | '_' => self.identifier(),
@@ -122,7 +131,7 @@ impl Scanner {
             "var" => TokenType::Var,
             "while" => TokenType::While,
             _ => TokenType::Identifier,
-        }; 
+        };
         if token_type == TokenType::Identifier {
             self.add_token(token_type, Some(Literal::Identifier(text.to_string())));
         } else {
@@ -140,15 +149,18 @@ impl Scanner {
                 self.advance();
             }
         }
-        self.add_token(TokenType::Number, Some(Literal::Number(self.source[self.start..self.current].parse().unwrap())));
-
+        self.add_token(
+            TokenType::Number,
+            Some(Literal::Number(
+                self.source[self.start..self.current].parse().unwrap(),
+            )),
+        );
     }
 
     fn string(&mut self) {
         while self.peek() != '"' && !self.is_at_end() {
             if self.peek() == '\n' {
                 self.line += 1;
-                
             }
             self.advance();
         }
@@ -199,7 +211,8 @@ impl Scanner {
 
     fn add_token(&mut self, token_type: TokenType, literal: Option<Literal>) {
         let text = &self.source[self.start..self.current];
-        self.tokens.push(Token::new(token_type, text.to_string(), literal, self.line));
+        self.tokens
+            .push(Token::new(token_type, text.to_string(), literal, self.line));
     }
 
     fn is_at_end(&self) -> bool {
@@ -314,18 +327,8 @@ mod tests {
         let mut scanner = Scanner::new(source.to_string());
         let tokens = scanner.scan_tokens();
         let expected = vec![
-            Token::new(
-                TokenType::String,
-                lexeme.to_string(),
-                literal,
-                5,
-            ),
-            Token::new(
-                TokenType::EndOfFile,
-                "".to_string(),
-                None,
-                6,
-            ),
+            Token::new(TokenType::String, lexeme.to_string(), literal, 5),
+            Token::new(TokenType::EndOfFile, "".to_string(), None, 6),
         ];
         assert_eq!(tokens, &expected);
     }

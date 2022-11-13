@@ -6,11 +6,8 @@ mod scanner;
 mod token;
 
 fn run_file(path: &String) {
-    let source = std::fs::read_to_string(path)
-        .expect("Unable to read file");
+    let source = std::fs::read_to_string(path).expect("Unable to read file");
     run(&source)
-
-    // if had_error { std::process::exit(64); }
 }
 
 fn run_prompt() {
@@ -19,13 +16,13 @@ fn run_prompt() {
         print!(">>> ");
         std::io::stdout().flush().unwrap();
         let mut line = String::new();
-        std::io::stdin().read_line(&mut line)
+        std::io::stdin()
+            .read_line(&mut line)
             .expect("Failed to read from stdin");
         if line.trim() == "exit()" {
             break;
         }
         run(&line);
-        // had_error = false;
     }
 }
 
@@ -47,7 +44,7 @@ fn main() {
         len if len > 2 => {
             println!("Useage: rnox [script]");
             std::process::exit(64);
-        },
+        }
         2 => run_file(&args[0]),
         _ => run_prompt(),
     }
