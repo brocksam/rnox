@@ -79,7 +79,7 @@ impl Scanner {
                 self.add_token_without_literal(TokenType::Slash)
             },
             ' ' | '\r' | '\t' => {},
-            '\n' => { self.line = self.line + 1 },
+            '\n' => { self.line += 1 },
             '"' => self.string(),
             '0'..='9' => self.number(),
             'a'..='z' | 'A'..='Z' | '_' => self.identifier(),
