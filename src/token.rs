@@ -2,7 +2,7 @@ use std::fmt;
 
 use crate::literal::Literal;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum TokenType {
     // Single-character tokens
     LeftParen,
