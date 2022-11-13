@@ -43,12 +43,12 @@ fn main() {
     for arg in args.iter() {
         println!("{}", arg);
     }
-    if args.len() > 2 {
-        println!("Useage: rnox [script]");
-        std::process::exit(64);
-    } else if args.len() == 2 {
-        run_file(&args[0]);
-    } else {
-        run_prompt();
+    match args.len() {
+        len if len > 2 => {
+            println!("Useage: rnox [script]");
+            std::process::exit(64);
+        },
+        2 => run_file(&args[0]),
+        _ => run_prompt(),
     }
 }
