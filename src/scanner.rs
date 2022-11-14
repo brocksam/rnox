@@ -92,7 +92,12 @@ impl Scanner {
             '"' => self.string(),
             '0'..='9' => self.number(),
             'a'..='z' | 'A'..='Z' | '_' => self.identifier(),
-            _ => error::error(self.line, &String::from("Unexpected character.")),
+            c => {
+                let mut msg = "Unexpected character ".to_string();
+                msg.push(c);
+                msg.push('.');
+                error::error(self.line, &msg);
+            }
         }
     }
 

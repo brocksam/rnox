@@ -1,7 +1,10 @@
 use std::io::Write;
 
 mod error;
+mod expr;
 mod literal;
+mod op;
+mod parser;
 mod scanner;
 mod token;
 
@@ -33,6 +36,11 @@ fn run(source: &String) {
     for token in tokens.iter() {
         println!("{:?}", token);
     }
+
+    let mut parser = parser::Parser::new(tokens.to_vec());
+    let expr = parser.parse();
+
+    println!("{:?}", expr);
 }
 
 fn main() {
