@@ -28,7 +28,7 @@ impl Parser {
     // equality -> comparison ( ( "!=" | "==" ) comparison )* ;
     fn equality(&mut self) -> Result<Expr, ParseError> {
         let mut expr = self.comparison()?;
-        while self.match_token_type_one_of(vec![TokenType::BangEqual, TokenType::EqualEqual]) {
+        while self.match_token_type_one_of(&[TokenType::BangEqual, TokenType::EqualEqual]) {
             let operator = match self.previous().token_type {
                 TokenType::BangEqual => BinaryOp::BangEqual,
                 TokenType::EqualEqual => BinaryOp::EqualEqual,
@@ -43,7 +43,7 @@ impl Parser {
     // comparison -> term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
     fn comparison(&mut self) -> Result<Expr, ParseError> {
         let mut expr = self.term()?;
-        while self.match_token_type_one_of(vec![
+        while self.match_token_type_one_of(&[
             TokenType::Greater,
             TokenType::GreaterEqual,
             TokenType::Less,
@@ -65,7 +65,7 @@ impl Parser {
     // term -> factor ( ( "-" | "+" ) factor )* ;
     fn term(&mut self) -> Result<Expr, ParseError> {
         let mut expr = self.factor()?;
-        while self.match_token_type_one_of(vec![TokenType::Minus, TokenType::Plus]) {
+        while self.match_token_type_one_of(&[TokenType::Minus, TokenType::Plus]) {
             let operator = match self.previous().token_type {
                 TokenType::Minus => BinaryOp::Minus,
                 TokenType::Plus => BinaryOp::Plus,
@@ -80,7 +80,7 @@ impl Parser {
     // factor -> unary ( ( "/" | "*" ) unary )* ;
     fn factor(&mut self) -> Result<Expr, ParseError> {
         let mut expr = self.unary()?;
-        while self.match_token_type_one_of(vec![TokenType::Slash, TokenType::Star]) {
+        while self.match_token_type_one_of(&[TokenType::Slash, TokenType::Star]) {
             let operator = match self.previous().token_type {
                 TokenType::Slash => BinaryOp::Slash,
                 TokenType::Star => BinaryOp::Star,
@@ -94,7 +94,7 @@ impl Parser {
 
     // unary -> ( "!" | "-" ) unary | primary ;
     fn unary(&mut self) -> Result<Expr, ParseError> {
-        if self.match_token_type_one_of(vec![TokenType::Bang, TokenType::Minus]) {
+        if self.match_token_type_one_of(&[TokenType::Bang, TokenType::Minus]) {
             let operator = match self.previous().token_type {
                 TokenType::Bang => UnaryOp::Bang,
                 TokenType::Minus => UnaryOp::Minus,
@@ -156,9 +156,9 @@ impl Parser {
         })
     }
 
-    fn match_token_type_one_of(&mut self, token_types: Vec<TokenType>) -> bool {
+    fn match_token_type_one_of(&mut self, token_types: &[TokenType]) -> bool {
         for token_type in token_types.iter() {
-            if self.check(token_type) {
+            if self.check(*token_type) {
                 self.advance();
                 return true;
             }
@@ -167,7 +167,7 @@ impl Parser {
     }
 
     fn match_token_type(&mut self, token_type: TokenType) -> bool {
-        if self.check(&token_type) {
+        if self.check(token_type) {
             self.advance();
             return true;
         }
@@ -175,7 +175,7 @@ impl Parser {
     }
 
     fn consume(&mut self, token_type: TokenType, message: String) -> Result<&Token, ParseError> {
-        if self.check(&token_type) {
+        if self.check(token_type) {
             return Ok(self.advance());
         }
         Err(ParseError {
@@ -184,11 +184,11 @@ impl Parser {
         })
     }
 
-    fn check(&self, token_type: &TokenType) -> bool {
+    fn check(&self, token_type: TokenType) -> bool {
         if self.is_at_end() {
             return false;
         }
-        &self.peek().token_type == token_type
+        self.peek().token_type == token_type
     }
 
     fn advance(&mut self) -> &Token {
@@ -306,8 +306,8 @@ mod tests {
     repl_single_expr_tests! {
         // Number literals
         repl_zero: (TokenType::Number, "0.0", Some(Literal::Number(0.0)), Expr::Literal(Literal::Number(0.0))),
-        repl_small: (TokenType::Number, "0.0000001", Some(Literal::Number(0.0000001)), Expr::Literal(Literal::Number(0.0000001))),
-        repl_large: (TokenType::Number, "999999.9", Some(Literal::Number(999999.9)), Expr::Literal(Literal::Number(999999.9))),
+        repl_small: (TokenType::Number, "0.000000_1", Some(Literal::Number(0.000_000_1)), Expr::Literal(Literal::Number(0.000_000_1))),
+        repl_large: (TokenType::Number, "999999.9", Some(Literal::Number(999_999.9)), Expr::Literal(Literal::Number(999_999.9))),
 
         // String literals
         repl_single_string: (TokenType::String, "\"a\"", Some(Literal::String("a".to_string())), Expr::Literal(Literal::String("a".to_string()))),
