@@ -2,15 +2,22 @@ use std::io::Write;
 
 mod error;
 mod expr;
+mod interpreter;
 mod literal;
 mod op;
 mod parser;
 mod scanner;
+mod status;
 mod token;
+mod value;
 
 fn run_file(path: &String) {
     let source = std::fs::read_to_string(path).expect("Unable to read file");
-    run(&source)
+    match run(&source) {
+        status::Status::Success => {}
+        status::Status::ParseError => std::process::exit(65),
+        status::Status::RuntimeError => std::process::exit(70),
+    }
 }
 
 fn run_prompt() {
