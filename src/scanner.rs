@@ -288,7 +288,7 @@ mod tests {
         repl_zero_float: ("0.0\n", TokenType::Number, "0.0", Some(Literal::Number(0.0))),
         repl_one_int: ("1\n", TokenType::Number, "1", Some(Literal::Number(1.0))),
         repl_one_float: ("1.0\n", TokenType::Number, "1.0", Some(Literal::Number(1.0))),
-        repl_large_int: ("999_999\n", TokenType::Number, "999999", Some(Literal::Number(999_999.0))),
+        repl_large_int: ("999999\n", TokenType::Number, "999999", Some(Literal::Number(999_999.0))),
         repl_large_float: ("999999.0\n", TokenType::Number, "999999.0", Some(Literal::Number(999_999.0))),
         repl_small_float: ("0.0000001\n", TokenType::Number, "0.0000001", Some(Literal::Number(0.000_000_1))),
 
