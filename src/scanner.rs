@@ -13,7 +13,7 @@ pub struct Scanner {
 }
 
 impl Scanner {
-    pub fn new(source: String) -> Self {
+    pub const fn new(source: String) -> Self {
         Self {
             source,
             tokens: Vec::new(),
@@ -30,7 +30,7 @@ impl Scanner {
         }
         self.tokens.push(Token::new(
             TokenType::EndOfFile,
-            String::from(""),
+            String::new(),
             None,
             self.line,
         ));
@@ -52,30 +52,30 @@ impl Scanner {
             '*' => self.add_token_without_literal(TokenType::Star),
             '!' => {
                 if self.match_next('=') {
-                    self.add_token_without_literal(TokenType::BangEqual)
+                    self.add_token_without_literal(TokenType::BangEqual);
                 } else {
-                    self.add_token_without_literal(TokenType::Bang)
+                    self.add_token_without_literal(TokenType::Bang);
                 }
             }
             '=' => {
                 if self.match_next('=') {
-                    self.add_token_without_literal(TokenType::EqualEqual)
+                    self.add_token_without_literal(TokenType::EqualEqual);
                 } else {
-                    self.add_token_without_literal(TokenType::Equal)
+                    self.add_token_without_literal(TokenType::Equal);
                 }
             }
             '<' => {
                 if self.match_next('=') {
-                    self.add_token_without_literal(TokenType::LessEqual)
+                    self.add_token_without_literal(TokenType::LessEqual);
                 } else {
-                    self.add_token_without_literal(TokenType::Less)
+                    self.add_token_without_literal(TokenType::Less);
                 }
             }
             '>' => {
                 if self.match_next('=') {
-                    self.add_token_without_literal(TokenType::GreaterEqual)
+                    self.add_token_without_literal(TokenType::GreaterEqual);
                 } else {
-                    self.add_token_without_literal(TokenType::Greater)
+                    self.add_token_without_literal(TokenType::Greater);
                 }
             }
             '/' => {
@@ -84,7 +84,7 @@ impl Scanner {
                         self.advance();
                     }
                 } else {
-                    self.add_token_without_literal(TokenType::Slash)
+                    self.add_token_without_literal(TokenType::Slash);
                 }
             }
             ' ' | '\r' | '\t' => {}
@@ -101,20 +101,20 @@ impl Scanner {
         }
     }
 
-    fn is_digit(&self, c: &char) -> bool {
+    const fn is_digit(c: char) -> bool {
         matches!(c, '0'..='9')
     }
 
-    fn is_alpha(&self, c: &char) -> bool {
+    const fn is_alpha(c: char) -> bool {
         matches!(c, 'a'..='z' | 'A'..='Z' | '_')
     }
 
-    fn is_alpha_numeric(&self, c: &char) -> bool {
-        self.is_alpha(c) || self.is_digit(c)
+    const fn is_alpha_numeric(c: char) -> bool {
+        Self::is_alpha(c) || Self::is_digit(c)
     }
 
     fn identifier(&mut self) {
-        while self.is_alpha_numeric(&self.peek()) {
+        while Self::is_alpha_numeric(self.peek()) {
             self.advance();
         }
         let text = &self.source[self.start..self.current];
@@ -145,12 +145,12 @@ impl Scanner {
     }
 
     fn number(&mut self) {
-        while self.is_digit(&self.peek()) {
+        while Self::is_digit(self.peek()) {
             self.advance();
         }
-        if self.peek() == '.' && self.is_digit(&self.peek_next()) {
+        if self.peek() == '.' && Self::is_digit(self.peek_next()) {
             self.advance();
-            while self.is_digit(&self.peek()) {
+            while Self::is_digit(self.peek()) {
                 self.advance();
             }
         }
@@ -288,9 +288,9 @@ mod tests {
         repl_zero_float: ("0.0\n", TokenType::Number, "0.0", Some(Literal::Number(0.0))),
         repl_one_int: ("1\n", TokenType::Number, "1", Some(Literal::Number(1.0))),
         repl_one_float: ("1.0\n", TokenType::Number, "1.0", Some(Literal::Number(1.0))),
-        repl_large_int: ("999999\n", TokenType::Number, "999999", Some(Literal::Number(999999.0))),
-        repl_large_float: ("999999.0\n", TokenType::Number, "999999.0", Some(Literal::Number(999999.0))),
-        repl_small_float: ("0.0000001\n", TokenType::Number, "0.0000001", Some(Literal::Number(0.0000001))),
+        repl_large_int: ("999_999\n", TokenType::Number, "999999", Some(Literal::Number(999_999.0))),
+        repl_large_float: ("999999.0\n", TokenType::Number, "999999.0", Some(Literal::Number(999_999.0))),
+        repl_small_float: ("0.0000001\n", TokenType::Number, "0.0000001", Some(Literal::Number(0.000_000_1))),
 
         // String literals
         repl_single_string: ("\"a\"\n", TokenType::String, "\"a\"", Some(Literal::String("a".to_string()))),
@@ -333,7 +333,7 @@ mod tests {
         let tokens = scanner.scan_tokens();
         let expected = vec![
             Token::new(TokenType::String, lexeme.to_string(), literal, 5),
-            Token::new(TokenType::EndOfFile, "".to_string(), None, 6),
+            Token::new(TokenType::EndOfFile, String::new(), None, 6),
         ];
         assert_eq!(tokens, &expected);
     }
