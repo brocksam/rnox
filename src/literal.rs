@@ -13,12 +13,11 @@ pub enum Literal {
 impl fmt::Display for Literal {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Literal::Identifier(value) => write!(f, "{:?}", value),
-            Literal::Number(value) => write!(f, "{:?}", value),
-            Literal::String(value) => write!(f, "{:?}", value),
-            Literal::False => write!(f, "false"),
-            Literal::True => write!(f, "true"),
-            Literal::Nil => write!(f, "nil"),
+            Self::Identifier(value) | Self::String(value) => write!(f, "{:?}", value),
+            Self::Number(value) => write!(f, "{:?}", value),
+            Self::False => write!(f, "false"),
+            Self::True => write!(f, "true"),
+            Self::Nil => write!(f, "nil"),
         }
     }
 }
