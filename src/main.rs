@@ -25,27 +25,40 @@ fn run_prompt() {
         if line.trim() == "exit()" {
             break;
         }
-        run(&line);
+        _ = run(&line);
     }
 }
 
-fn run(source: &String) {
+fn run(source: &String) -> status::Status {
     let mut scanner = scanner::Scanner::new(source.to_string());
     let tokens = scanner.scan_tokens();
 
-    for token in tokens.iter() {
-        println!("{:?}", token);
+    let mut parser = parser::Parser::new(tokens.clone());
+    let result = parser.parse();
+
+    let expr = match result {
+        Ok(expr) => expr,
+        Err(error) => {
+            println!("{}", error);
+            return status::Status::ParseError;
+        }
+    };
+
+    let interpreter = interpreter::Interpreter::new(expr);
+    let value = interpreter.interpret();
+    match value {
+        Ok(val) => println!("{}", val),
+        Err(error) => {
+            println!("{}", error);
+            return status::Status::RuntimeError;
+        }
     }
-
-    let mut parser = parser::Parser::new(tokens.to_vec());
-    let expr = parser.parse();
-
-    println!("{:?}", expr);
+    status::Status::Success
 }
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
-    for arg in args.iter() {
+    for arg in &args {
         println!("{}", arg);
     }
     match args.len() {
