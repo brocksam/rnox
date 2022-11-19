@@ -3,6 +3,7 @@ use crate::{
     expr::Expr,
     literal::Literal,
     op::{BinaryOp, UnaryOp},
+    statement::Statement,
     token::{Token, TokenType},
 };
 
@@ -16,8 +17,51 @@ impl Parser {
         Self { tokens, current: 0 }
     }
 
-    pub fn parse(&mut self) -> Result<Expr, ParseError> {
-        self.expression()
+    // program -> statement* EOF ;
+    pub fn parse(&mut self) -> Result<Vec<Statement>, ParseError> {
+        let mut statements: Vec<Statement> = Vec::new();
+        while !self.is_at_end() {
+            match self.statement() {
+                Ok(statement) => statements.push(statement),
+                Err(parse_error) => return Err(parse_error),
+            };
+        }
+        Ok(statements)
+    }
+
+    // statement -> expressionStatement | printStatement ;
+    fn statement(&mut self) -> Result<Statement, ParseError> {
+        if self.match_token_type(TokenType::Print) {
+            return self.print_statement();
+        }
+        self.expression_statement()
+    }
+
+    // printStatement -> expression ";" ;
+    fn print_statement(&mut self) -> Result<Statement, ParseError> {
+        let value = match self.expression() {
+            Ok(expr) => expr,
+            Err(parse_error) => return Err(parse_error),
+        };
+        match self.consume(TokenType::Semicolon, "Expect ';' after value.".to_owned()) {
+            Ok(_) => Ok(Statement::Print(value)),
+            Err(parse_error) => Err(parse_error),
+        }
+    }
+
+    // expressionStatement -> "print" expression ";" ;
+    fn expression_statement(&mut self) -> Result<Statement, ParseError> {
+        let expr = match self.expression() {
+            Ok(expr) => expr,
+            Err(parse_error) => return Err(parse_error),
+        };
+        match self.consume(
+            TokenType::Semicolon,
+            "Expect ';' after expression.".to_owned(),
+        ) {
+            Ok(_) => Ok(Statement::Expression(expr)),
+            Err(parse_error) => Err(parse_error),
+        }
     }
 
     // expression -> equality ;
