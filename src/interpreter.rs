@@ -3,26 +3,56 @@ use crate::{
     expr::Expr,
     literal::Literal,
     op::{BinaryOp, UnaryOp},
+    statement::Statement,
     value::Value,
 };
 
 pub struct Interpreter {
-    pub expr: Expr,
+    pub statements: Vec<Statement>,
 }
 
 impl Interpreter {
-    pub const fn new(expr: Expr) -> Self {
-        Self { expr }
+    pub const fn new(statements: Vec<Statement>) -> Self {
+        Self { statements }
     }
 
-    pub fn interpret(&self) -> Result<Value, RuntimeError> {
-        self.visit_expr(&self.expr)
+    pub fn interpret(&self) -> Option<RuntimeError> {
+        for statement in &self.statements {
+            if let Some(runtime_error) = self.visit_statement(statement) {
+                return Some(runtime_error);
+            };
+        }
+        None
     }
 
-    fn visit_expr(&self, expr: &Expr) -> Result<Value, RuntimeError> {
+    fn visit_statement(&self, statement: &Statement) -> Option<RuntimeError> {
+        match statement {
+            Statement::Expression(expression) => self.visit_expression_statement(expression),
+            Statement::Print(expression) => self.visit_print_statement(expression),
+        }
+    }
+
+    fn visit_expression_statement(&self, expression: &Expr) -> Option<RuntimeError> {
+        match self.visit_expression(expression) {
+            Ok(_) => None,
+            Err(runtime_error) => Some(runtime_error),
+        }
+    }
+
+    fn visit_print_statement(&self, expression: &Expr) -> Option<RuntimeError> {
+        match self.visit_expression(expression) {
+            Ok(expr) => {
+                println!("{}", expr);
+                None
+            }
+            Err(runtime_error) => Some(runtime_error),
+        }
+    }
+
+    fn visit_expression(&self, expr: &Expr) -> Result<Value, RuntimeError> {
         match &expr {
             Expr::Binary(l, op, r) => self.visit_binary(l, op, r),
-            Expr::Grouping(e) => self.visit_expr(e),
+            Expr::Grouping(e) => self.visit_expression(e),
             Expr::Literal(l) => Ok(Self::visit_literal(l)),
             Expr::Unary(op, e) => self.visit_unary(op, e),
         }
@@ -40,7 +70,7 @@ impl Interpreter {
     }
 
     fn visit_unary(&self, op: &UnaryOp, expr: &Expr) -> Result<Value, RuntimeError> {
-        let value = self.visit_expr(expr)?;
+        let value = self.visit_expression(expr)?;
 
         match (&op, &value) {
             (UnaryOp::Minus, Value::Number(n)) => Ok(Value::Number(-n)),
@@ -60,8 +90,8 @@ impl Interpreter {
         op: &BinaryOp,
         rhs_expr: &Expr,
     ) -> Result<Value, RuntimeError> {
-        let lhs = self.visit_expr(lhs_expr)?;
-        let rhs = self.visit_expr(rhs_expr)?;
+        let lhs = self.visit_expression(lhs_expr)?;
+        let rhs = self.visit_expression(rhs_expr)?;
 
         match (&lhs, &op, &rhs) {
             (Value::Number(l), BinaryOp::Greater, Value::Number(r)) => Ok(Value::Bool(l > r)),
