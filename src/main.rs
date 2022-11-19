@@ -7,6 +7,7 @@ mod literal;
 mod op;
 mod parser;
 mod scanner;
+mod statement;
 mod status;
 mod token;
 mod value;
@@ -43,23 +44,20 @@ fn run(source: &String) -> status::Status {
     let mut parser = parser::Parser::new(tokens.clone());
     let result = parser.parse();
 
-    let expr = match result {
-        Ok(expr) => expr,
+    let statements = match result {
+        Ok(statements) => statements,
         Err(error) => {
             println!("{}", error);
             return status::Status::ParseError;
         }
     };
 
-    let interpreter = interpreter::Interpreter::new(expr);
+    let interpreter = interpreter::Interpreter::new(statements);
     let value = interpreter.interpret();
-    match value {
-        Ok(val) => println!("{}", val),
-        Err(error) => {
-            println!("{}", error);
-            return status::Status::RuntimeError;
-        }
-    }
+    if let Some(error) = value {
+        println!("{}", error);
+        return status::Status::RuntimeError;
+    };
     status::Status::Success
 }
 
