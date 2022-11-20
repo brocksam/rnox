@@ -297,15 +297,21 @@ mod tests {
                             1,
                         ),
                         Token::new(
+                            TokenType::Semicolon,
+                            ";".to_owned(),
+                            None,
+                            1,
+                        ),
+                        Token::new(
                             TokenType::EndOfFile,
-                            "".to_string(),
+                            "".to_owned(),
                             None,
                             2,
                         ),
                     ];
                     let mut parser = Parser::new(tokens.to_vec());
                     let expr = parser.parse();
-                    let expected = Ok(expr_literal);
+                    let expected = Ok(vec![Statement::Expression(expr_literal)]);
                     assert_eq!(expr, expected);
                 }
             )*
@@ -321,13 +327,19 @@ mod tests {
                     let tokens = vec![
                         Token::new(
                             token_type,
-                            lexeme.to_string(),
+                            lexeme.to_owned(),
+                            None,
+                            1,
+                        ),
+                        Token::new(
+                            TokenType::Semicolon,
+                            ";".to_owned(),
                             None,
                             1,
                         ),
                         Token::new(
                             TokenType::EndOfFile,
-                            "".to_string(),
+                            "".to_owned(),
                             None,
                             2,
                         ),
@@ -336,7 +348,7 @@ mod tests {
                     let expr = parser.parse();
                     let token = Token::new(
                         expr_token_type,
-                        expr_lexeme.to_string(),
+                        expr_lexeme.to_owned(),
                         None,
                         line,
                     );
@@ -349,20 +361,20 @@ mod tests {
 
     repl_single_expr_tests! {
         // Number literals
-        repl_zero: (TokenType::Number, "0.0", Some(Literal::Number(0.0)), Expr::Literal(Literal::Number(0.0))),
-        repl_small: (TokenType::Number, "0.000000_1", Some(Literal::Number(0.000_000_1)), Expr::Literal(Literal::Number(0.000_000_1))),
-        repl_large: (TokenType::Number, "999999.9", Some(Literal::Number(999_999.9)), Expr::Literal(Literal::Number(999_999.9))),
+        repl_number_zero: (TokenType::Number, "0.0", Some(Literal::Number(0.0)), Expr::Literal(Literal::Number(0.0))),
+        repl_number_small: (TokenType::Number, "0.000000_1", Some(Literal::Number(0.000_000_1)), Expr::Literal(Literal::Number(0.000_000_1))),
+        repl_number_large: (TokenType::Number, "999999.9", Some(Literal::Number(999_999.9)), Expr::Literal(Literal::Number(999_999.9))),
 
         // String literals
-        repl_single_string: (TokenType::String, "\"a\"", Some(Literal::String("a".to_string())), Expr::Literal(Literal::String("a".to_string()))),
-        repl_multiple_string: (TokenType::String, "\"abyz\"", Some(Literal::String("abyz".to_string())), Expr::Literal(Literal::String("abyz".to_string()))),
-        repl_whitespace_string: (TokenType::String, "\" \"", Some(Literal::String(" ".to_string())), Expr::Literal(Literal::String(" ".to_string()))),
+        repl_string_single: (TokenType::String, "\"a\"", Some(Literal::String("a".to_string())), Expr::Literal(Literal::String("a".to_string()))),
+        repl_string_multiple: (TokenType::String, "\"abyz\"", Some(Literal::String("abyz".to_string())), Expr::Literal(Literal::String("abyz".to_string()))),
+        repl_string_whitespace: (TokenType::String, "\" \"", Some(Literal::String(" ".to_string())), Expr::Literal(Literal::String(" ".to_string()))),
     }
 
     repl_single_op_error_tests! {
-        repl_minus: (TokenType::Minus, "-", TokenType::EndOfFile, "", 2),
+        repl_minus: (TokenType::Minus, "-", TokenType::Semicolon, ";", 1),
         repl_plus: (TokenType::Plus, "+", TokenType::Plus, "+", 1),
-        repl_bang: (TokenType::Bang, "!", TokenType::EndOfFile, "", 2),
+        repl_bang: (TokenType::Bang, "!", TokenType::Semicolon, ";", 1),
         repl_equal: (TokenType::Equal, "=", TokenType::Equal, "=", 1),
         repl_bang_equal: (TokenType::BangEqual, "!=", TokenType::BangEqual, "!=", 1),
         repl_equal_equal: (TokenType::EqualEqual, "==", TokenType::EqualEqual, "==", 1),
@@ -375,7 +387,7 @@ mod tests {
         repl_semicolon: (TokenType::Semicolon, ";", TokenType::Semicolon, ";", 1),
         repl_comma: (TokenType::Comma, ",", TokenType::Comma, ",", 1),
         repl_dot: (TokenType::Dot, ".", TokenType::Dot, ".", 1),
-        repl_left_paren: (TokenType::LeftParen, "(", TokenType::EndOfFile, "", 2),
+        repl_left_paren: (TokenType::LeftParen, "(", TokenType::Semicolon, ";", 1),
         repl_right_paren: (TokenType::RightParen, ")", TokenType::RightParen, ")",  1),
         repl_left_brace: (TokenType::LeftBrace, "{", TokenType::LeftBrace, "{", 1),
         repl_right_brace: (TokenType::RightBrace, "}", TokenType::RightBrace, "}",  1),
