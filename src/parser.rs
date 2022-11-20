@@ -189,7 +189,7 @@ impl Parser {
             let expr = self.expression()?;
             self.consume(
                 TokenType::RightParen,
-                "expected ')' after expression".to_string(),
+                "expected ')' after expression".to_owned(),
             )
             .unwrap();
             return Ok(Expr::Grouping(Box::new(expr)));
@@ -292,7 +292,7 @@ mod tests {
                     let tokens = vec![
                         Token::new(
                             token_type,
-                            lexeme.to_string(),
+                            lexeme.to_owned(),
                             literal,
                             1,
                         ),
@@ -366,9 +366,9 @@ mod tests {
         repl_number_large: (TokenType::Number, "999999.9", Some(Literal::Number(999_999.9)), Expr::Literal(Literal::Number(999_999.9))),
 
         // String literals
-        repl_string_single: (TokenType::String, "\"a\"", Some(Literal::String("a".to_string())), Expr::Literal(Literal::String("a".to_string()))),
-        repl_string_multiple: (TokenType::String, "\"abyz\"", Some(Literal::String("abyz".to_string())), Expr::Literal(Literal::String("abyz".to_string()))),
-        repl_string_whitespace: (TokenType::String, "\" \"", Some(Literal::String(" ".to_string())), Expr::Literal(Literal::String(" ".to_string()))),
+        repl_string_single: (TokenType::String, "\"a\"", Some(Literal::String("a".to_owned())), Expr::Literal(Literal::String("a".to_owned()))),
+        repl_string_multiple: (TokenType::String, "\"abyz\"", Some(Literal::String("abyz".to_owned())), Expr::Literal(Literal::String("abyz".to_owned()))),
+        repl_string_whitespace: (TokenType::String, "\" \"", Some(Literal::String(" ".to_owned())), Expr::Literal(Literal::String(" ".to_owned()))),
     }
 
     repl_single_op_error_tests! {
