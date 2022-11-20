@@ -17,7 +17,7 @@ impl Parser {
         Self { tokens, current: 0 }
     }
 
-    // program -> statement* EOF ;
+    // program -> declaration* EOF ;
     pub fn parse(&mut self) -> Result<Vec<Statement>, ParseError> {
         let mut statements: Vec<Statement> = Vec::new();
         while !self.is_at_end() {
@@ -27,6 +27,16 @@ impl Parser {
             };
         }
         Ok(statements)
+    }
+
+    // declaration -> variableDeclaration | statement ;
+    fn declaration(&mut self) -> Result<Statement, ParseError> {
+
+    }
+
+    // variableDeclaration -> "var" IDENTIFIER ( "=" expression )? ";" ;
+    fn variable_declaration(&mut self) -> Result<Statement, ParseError> {
+
     }
 
     // statement -> expressionStatement | printStatement ;
