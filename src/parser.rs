@@ -21,7 +21,7 @@ impl Parser {
     pub fn parse(&mut self) -> Result<Vec<Statement>, ParseError> {
         let mut statements: Vec<Statement> = Vec::new();
         while !self.is_at_end() {
-            match self.statement() {
+            match self.declaration() {
                 Ok(statement) => statements.push(statement),
                 Err(parse_error) => return Err(parse_error),
             };
@@ -31,12 +31,49 @@ impl Parser {
 
     // declaration -> variableDeclaration | statement ;
     fn declaration(&mut self) -> Result<Statement, ParseError> {
-
+        let value = if self.match_token_type(TokenType::Var) {
+            self.variable_declaration()
+        } else {
+            self.statement()
+        };
+        match value {
+            Ok(statement) => Ok(statement),
+            Err(parse_error) => {
+                self.synchronize();
+                Err(parse_error)
+            }
+        }
     }
 
     // variableDeclaration -> "var" IDENTIFIER ( "=" expression )? ";" ;
     fn variable_declaration(&mut self) -> Result<Statement, ParseError> {
-
+        let name = match self.consume(TokenType::Identifier, "Expect variable name.".to_owned()) {
+            Ok(token) => match &token.literal {
+                Some(Literal::Identifier(name)) => Literal::Identifier(name.to_owned()),
+                _ => {
+                    return Err(ParseError {
+                        token: token.clone(),
+                        message: Some("Expect named identifier.".to_owned()),
+                    })
+                }
+            },
+            Err(parse_error) => return Err(parse_error),
+        };
+        let initializer = if self.match_token_type(TokenType::Equal) {
+            match self.expression() {
+                Ok(expr) => Some(expr),
+                Err(parse_error) => return Err(parse_error),
+            }
+        } else {
+            None
+        };
+        match self.consume(
+            TokenType::Semicolon,
+            "Expect ';' after variable declaration.".to_owned(),
+        ) {
+            Ok(_) => Ok(Statement::Variable(name, initializer)),
+            Err(parse_error) => Err(parse_error),
+        }
     }
 
     // statement -> expressionStatement | printStatement ;
@@ -160,7 +197,7 @@ impl Parser {
         self.primary()
     }
 
-    // primary -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" ;
+    // primary -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER ;
     fn primary(&mut self) -> Result<Expr, ParseError> {
         if self.match_token_type(TokenType::False) {
             return Ok(Expr::Literal(Literal::False));
@@ -177,10 +214,10 @@ impl Parser {
                     return Ok(Expr::Literal(Literal::Number(*n)));
                 }
                 Some(l) => panic!(
-                    "Internal error in parser, when parsing number found literal {:?}",
+                    "Internal error in parser, when parsing number found literal {:?}.",
                     l
                 ),
-                None => panic!("Internal error in parser, when parsing number no literal found"),
+                None => panic!("Internal error in parser, when parsing number no literal found."),
             }
         }
         if self.match_token_type(TokenType::String) {
@@ -189,10 +226,24 @@ impl Parser {
                     return Ok(Expr::Literal(Literal::String(s.clone())));
                 }
                 Some(l) => panic!(
-                    "Internal error in parser, when parsing string found literal {:?}",
-                    l
+                    "Internal error in parser, when parsing string found literal {:?}.",
+                    l,
                 ),
-                None => panic!("Internal error in parser, when parsing string no literal found"),
+                None => panic!("Internal error in parser, when parsing string no literal found."),
+            }
+        }
+        if self.match_token_type(TokenType::Identifier) {
+            match &self.previous().literal {
+                Some(Literal::Identifier(s)) => {
+                    return Ok(Expr::Literal(Literal::Identifier(s.clone())));
+                }
+                Some(l) => panic!(
+                    "Internal error in parser, when parsing identifier found literal {:?}.",
+                    l,
+                ),
+                None => {
+                    panic!("Internal error in parser, when parsing identifier no literal found.")
+                }
             }
         }
         if self.match_token_type(TokenType::LeftParen) {
@@ -288,7 +339,7 @@ impl Parser {
 }
 
 #[cfg(test)]
-mod tests {
+mod tests_parser {
 
     use super::*;
 
@@ -320,20 +371,20 @@ mod tests {
                         ),
                     ];
                     let mut parser = Parser::new(tokens.to_vec());
-                    let expr = parser.parse();
+                    let result = parser.parse();
                     let expected = Ok(vec![Statement::Expression(expr_literal)]);
-                    assert_eq!(expr, expected);
+                    assert_eq!(result, expected);
                 }
             )*
         }
     }
 
-    macro_rules! repl_single_op_error_tests {
+    macro_rules! repl_single_token_error_tests {
         ($($name:ident: $value:expr,)*) => {
             $(
                 #[test]
                 fn $name() {
-                    let (token_type, lexeme, expr_token_type, expr_lexeme, line) = $value;
+                    let (token_type, lexeme, expr_token_type, expr_lexeme, message) = $value;
                     let tokens = vec![
                         Token::new(
                             token_type,
@@ -355,15 +406,15 @@ mod tests {
                         ),
                     ];
                     let mut parser = Parser::new(tokens.to_vec());
-                    let expr = parser.parse();
+                    let result = parser.parse();
                     let token = Token::new(
                         expr_token_type,
                         expr_lexeme.to_owned(),
                         None,
-                        line,
+                        1,
                     );
-                    let expected = Err(ParseError { token, message: None });
-                    assert_eq!(expr, expected);
+                    let expected = Err(ParseError { token, message });
+                    assert_eq!(result, expected);
                 }
             )*
         }
@@ -371,35 +422,49 @@ mod tests {
 
     repl_single_expr_tests! {
         // Number literals
-        repl_number_zero: (TokenType::Number, "0.0", Some(Literal::Number(0.0)), Expr::Literal(Literal::Number(0.0))),
-        repl_number_small: (TokenType::Number, "0.000000_1", Some(Literal::Number(0.000_000_1)), Expr::Literal(Literal::Number(0.000_000_1))),
-        repl_number_large: (TokenType::Number, "999999.9", Some(Literal::Number(999_999.9)), Expr::Literal(Literal::Number(999_999.9))),
+        test_repl_number_zero: (TokenType::Number, "0.0", Some(Literal::Number(0.0)), Expr::Literal(Literal::Number(0.0))),
+        test_repl_number_small: (TokenType::Number, "0.000000_1", Some(Literal::Number(0.000_000_1)), Expr::Literal(Literal::Number(0.000_000_1))),
+        test_repl_number_large: (TokenType::Number, "999999.9", Some(Literal::Number(999_999.9)), Expr::Literal(Literal::Number(999_999.9))),
 
         // String literals
-        repl_string_single: (TokenType::String, "\"a\"", Some(Literal::String("a".to_owned())), Expr::Literal(Literal::String("a".to_owned()))),
-        repl_string_multiple: (TokenType::String, "\"abyz\"", Some(Literal::String("abyz".to_owned())), Expr::Literal(Literal::String("abyz".to_owned()))),
-        repl_string_whitespace: (TokenType::String, "\" \"", Some(Literal::String(" ".to_owned())), Expr::Literal(Literal::String(" ".to_owned()))),
+        test_repl_string_single: (TokenType::String, "\"a\"", Some(Literal::String("a".to_owned())), Expr::Literal(Literal::String("a".to_owned()))),
+        test_repl_string_multiple: (TokenType::String, "\"abyz\"", Some(Literal::String("abyz".to_owned())), Expr::Literal(Literal::String("abyz".to_owned()))),
+        test_repl_string_whitespace: (TokenType::String, "\" \"", Some(Literal::String(" ".to_owned())), Expr::Literal(Literal::String(" ".to_owned()))),
+
+        // Bool
+        test_repl_true: (TokenType::True, "true", None, Expr::Literal(Literal::True)),
+        test_repl_false: (TokenType::False, "false", None, Expr::Literal(Literal::False)),
+
+        // Nil
+        test_repl_nil: (TokenType::Nil, "nil", None, Expr::Literal(Literal::Nil)),
     }
 
-    repl_single_op_error_tests! {
-        repl_minus: (TokenType::Minus, "-", TokenType::Semicolon, ";", 1),
-        repl_plus: (TokenType::Plus, "+", TokenType::Plus, "+", 1),
-        repl_bang: (TokenType::Bang, "!", TokenType::Semicolon, ";", 1),
-        repl_equal: (TokenType::Equal, "=", TokenType::Equal, "=", 1),
-        repl_bang_equal: (TokenType::BangEqual, "!=", TokenType::BangEqual, "!=", 1),
-        repl_equal_equal: (TokenType::EqualEqual, "==", TokenType::EqualEqual, "==", 1),
-        repl_greater: (TokenType::Greater, ">", TokenType::Greater, ">", 1),
-        repl_greater_equal: (TokenType::GreaterEqual, ">=", TokenType::GreaterEqual, ">=", 1),
-        repl_less: (TokenType::Less, "<", TokenType::Less, "<", 1),
-        repl_less_equal: (TokenType::LessEqual, "<=", TokenType::LessEqual, "<=", 1),
-        repl_star: (TokenType::Star, "*", TokenType::Star, "*", 1),
-        repl_slash: (TokenType::Slash, "/", TokenType::Slash, "/", 1),
-        repl_semicolon: (TokenType::Semicolon, ";", TokenType::Semicolon, ";", 1),
-        repl_comma: (TokenType::Comma, ",", TokenType::Comma, ",", 1),
-        repl_dot: (TokenType::Dot, ".", TokenType::Dot, ".", 1),
-        repl_left_paren: (TokenType::LeftParen, "(", TokenType::Semicolon, ";", 1),
-        repl_right_paren: (TokenType::RightParen, ")", TokenType::RightParen, ")",  1),
-        repl_left_brace: (TokenType::LeftBrace, "{", TokenType::LeftBrace, "{", 1),
-        repl_right_brace: (TokenType::RightBrace, "}", TokenType::RightBrace, "}",  1),
+    repl_single_token_error_tests! {
+        test_repl_minus: (TokenType::Minus, "-", TokenType::Semicolon, ";", None),
+        test_repl_plus: (TokenType::Plus, "+", TokenType::Plus, "+", None),
+        test_repl_bang: (TokenType::Bang, "!", TokenType::Semicolon, ";", None),
+        test_repl_equal: (TokenType::Equal, "=", TokenType::Equal, "=", None),
+        test_repl_bang_equal: (TokenType::BangEqual, "!=", TokenType::BangEqual, "!=", None),
+        test_repl_equal_equal: (TokenType::EqualEqual, "==", TokenType::EqualEqual, "==", None),
+        test_repl_greater: (TokenType::Greater, ">", TokenType::Greater, ">", None),
+        test_repl_greater_equal: (TokenType::GreaterEqual, ">=", TokenType::GreaterEqual, ">=", None),
+        test_repl_less: (TokenType::Less, "<", TokenType::Less, "<", None),
+        test_repl_less_equal: (TokenType::LessEqual, "<=", TokenType::LessEqual, "<=", None),
+        test_repl_star: (TokenType::Star, "*", TokenType::Star, "*", None),
+        test_repl_slash: (TokenType::Slash, "/", TokenType::Slash, "/", None),
+        test_repl_semicolon: (TokenType::Semicolon, ";", TokenType::Semicolon, ";", None),
+        test_repl_comma: (TokenType::Comma, ",", TokenType::Comma, ",", None),
+        test_repl_dot: (TokenType::Dot, ".", TokenType::Dot, ".", None),
+        test_repl_left_paren: (TokenType::LeftParen, "(", TokenType::Semicolon, ";", None),
+        test_repl_right_paren: (TokenType::RightParen, ")", TokenType::RightParen, ")", None),
+        test_repl_left_brace: (TokenType::LeftBrace, "{", TokenType::LeftBrace, "{", None),
+        test_repl_right_brace: (TokenType::RightBrace, "}", TokenType::RightBrace, "}", None),
     }
+
+    // #[test]
+    // fn repl_variable_assignment_to_number() {
+    //     let mut parser = Parser::new(tokens.to_vec());
+    //     let expr = parser.parse();
+    //     asserteq!(expr, expected)
+    // }
 }
