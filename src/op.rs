@@ -1,4 +1,4 @@
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum BinaryOp {
     BangEqual,
     EqualEqual,
@@ -12,7 +12,7 @@ pub enum BinaryOp {
     Slash,
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum UnaryOp {
     Minus,
     Bang,
