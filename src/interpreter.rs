@@ -1,4 +1,5 @@
 use crate::{
+    environment::Environment,
     error::RuntimeError,
     expr::Expr,
     literal::Literal,
@@ -9,15 +10,19 @@ use crate::{
 
 pub struct Interpreter {
     pub statements: Vec<Statement>,
+    pub environment: Environment,
 }
 
 impl Interpreter {
-    pub const fn new(statements: Vec<Statement>) -> Self {
-        Self { statements }
+    pub fn new(statements: Vec<Statement>) -> Self {
+        Self {
+            statements,
+            environment: Environment::new(),
+        }
     }
 
-    pub fn interpret(&self) -> Option<RuntimeError> {
-        for statement in &self.statements {
+    pub fn interpret(&mut self) -> Option<RuntimeError> {
+        for statement in self.statements.clone().iter() {
             if let Some(runtime_error) = self.visit_statement(statement) {
                 return Some(runtime_error);
             };
@@ -25,10 +30,13 @@ impl Interpreter {
         None
     }
 
-    fn visit_statement(&self, statement: &Statement) -> Option<RuntimeError> {
+    fn visit_statement(&mut self, statement: &Statement) -> Option<RuntimeError> {
         match statement {
             Statement::Expression(expression) => self.visit_expression_statement(expression),
             Statement::Print(expression) => self.visit_print_statement(expression),
+            Statement::Variable(name, expression) => {
+                self.visit_variable_statement(name, expression)
+            }
         }
     }
 
@@ -49,23 +57,47 @@ impl Interpreter {
         }
     }
 
+    fn visit_variable_statement(
+        &mut self,
+        literal: &Literal,
+        expression: &Option<Expr>,
+    ) -> Option<RuntimeError> {
+        let value = match expression {
+            Some(e) => match self.visit_expression(e) {
+                Ok(value) => Some(value),
+                Err(runtime_error) => return Some(runtime_error),
+            },
+            None => None,
+        };
+        let name = match literal {
+            Literal::Identifier(s) => s,
+            _ => {
+                return Some(RuntimeError {
+                    message: format!("Expected a literal identifier, not {}", literal),
+                })
+            }
+        };
+        self.environment.define(name.to_owned(), value);
+        None
+    }
+
     fn visit_expression(&self, expr: &Expr) -> Result<Value, RuntimeError> {
         match &expr {
             Expr::Binary(l, op, r) => self.visit_binary(l, op, r),
             Expr::Grouping(e) => self.visit_expression(e),
-            Expr::Literal(l) => Ok(Self::visit_literal(l)),
+            Expr::Literal(l) | Expr::Variable(l) => self.visit_literal(l),
             Expr::Unary(op, e) => self.visit_unary(op, e),
         }
     }
 
-    fn visit_literal(literal: &Literal) -> Value {
+    fn visit_literal(&self, literal: &Literal) -> Result<Value, RuntimeError> {
         match &literal {
-            Literal::Identifier(_s) => todo!(),
-            Literal::Number(n) => Value::Number(*n),
-            Literal::String(s) => Value::String(s.to_string()),
-            Literal::False => Value::Bool(false),
-            Literal::True => Value::Bool(true),
-            Literal::Nil => Value::Nil,
+            Literal::Identifier(s) => self.environment.get(s),
+            Literal::Number(n) => Ok(Value::Number(*n)),
+            Literal::String(s) => Ok(Value::String(s.to_string())),
+            Literal::False => Ok(Value::Bool(false)),
+            Literal::True => Ok(Value::Bool(true)),
+            Literal::Nil => Ok(Value::Nil),
         }
     }
 
