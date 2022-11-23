@@ -226,14 +226,13 @@ impl Scanner {
 }
 
 #[cfg(test)]
-mod tests {
+mod tests_scanner {
 
     use super::*;
 
     macro_rules! repl_single_token_tests {
         ($($name:ident: $value:expr,)*) => {
             $(
-
                 #[test]
                 fn $name() {
                     let (source, token_type, lexeme, literal) = $value;
@@ -259,69 +258,91 @@ mod tests {
         }
     }
 
+    macro_rules! repl_variable_assignment_single_token_tests {
+        ($($name:ident: $value:expr,)*) => {
+            $(
+                #[test]
+                fn $name() {
+                    let (source, token_type, lexeme, literal) = $value;
+                    let mut scanner = Scanner::new(source.to_owned());
+                    let tokens = scanner.scan_tokens();
+                    let expected = vec![
+                        Token::new(TokenType::Var, "var".to_owned(), None, 1),
+                        Token::new(TokenType::Identifier, "a".to_owned(), Some(Literal::Identifier("a".to_owned())), 1),
+                        Token::new(TokenType::Equal, "=".to_owned(), None, 1),
+                        Token::new(token_type, lexeme.to_owned(), literal, 1),
+                        Token::new(TokenType::Semicolon, ";".to_owned(), None, 1),
+                        Token::new(TokenType::EndOfFile, String::new(), None, 2),
+                    ];
+                    assert_eq!(tokens, &expected);
+                }
+            )*
+        }
+    }
+
     repl_single_token_tests! {
         // Single-character tokens
-        repl_left_paren: ("(\n", TokenType::LeftParen, "(", None),
-        repl_right_paren: (")\n", TokenType::RightParen, ")", None),
-        repl_left_brace: ("{\n", TokenType::LeftBrace, "{", None),
-        repl_right_brace: ("}\n", TokenType::RightBrace, "}", None),
-        repl_comma: (",\n", TokenType::Comma, ",", None),
-        repl_dot: (".\n", TokenType::Dot, ".", None),
-        repl_minus: ("-\n", TokenType::Minus, "-", None),
-        repl_plus: ("+\n", TokenType::Plus, "+", None),
-        repl_semicolon: (";\n", TokenType::Semicolon, ";", None),
-        repl_slash: ("/\n", TokenType::Slash, "/", None),
-        repl_star: ("*\n", TokenType::Star, "*", None),
+        test_repl_left_paren: ("(\n", TokenType::LeftParen, "(", None),
+        test_repl_right_paren: (")\n", TokenType::RightParen, ")", None),
+        test_repl_left_brace: ("{\n", TokenType::LeftBrace, "{", None),
+        test_repl_right_brace: ("}\n", TokenType::RightBrace, "}", None),
+        test_repl_comma: (",\n", TokenType::Comma, ",", None),
+        test_repl_dot: (".\n", TokenType::Dot, ".", None),
+        test_repl_minus: ("-\n", TokenType::Minus, "-", None),
+        test_repl_plus: ("+\n", TokenType::Plus, "+", None),
+        test_repl_semicolon: (";\n", TokenType::Semicolon, ";", None),
+        test_repl_slash: ("/\n", TokenType::Slash, "/", None),
+        test_repl_star: ("*\n", TokenType::Star, "*", None),
 
         // One or two character tokens
-        repl_bang: ("!\n", TokenType::Bang, "!", None),
-        repl_bang_equal: ("!=\n", TokenType::BangEqual, "!=", None),
-        repl_equal: ("=\n", TokenType::Equal, "=", None),
-        repl_equal_equal: ("==\n", TokenType::EqualEqual, "==", None),
-        repl_greater: (">\n", TokenType::Greater, ">", None),
-        repl_greater_equal: (">=\n", TokenType::GreaterEqual, ">=", None),
-        repl_less: ("<\n", TokenType::Less, "<", None),
-        repl_less_equal: ("<=\n", TokenType::LessEqual, "<=", None),
+        test_repl_bang: ("!\n", TokenType::Bang, "!", None),
+        test_repl_bang_equal: ("!=\n", TokenType::BangEqual, "!=", None),
+        test_repl_equal: ("=\n", TokenType::Equal, "=", None),
+        test_repl_equal_equal: ("==\n", TokenType::EqualEqual, "==", None),
+        test_repl_greater: (">\n", TokenType::Greater, ">", None),
+        test_repl_greater_equal: (">=\n", TokenType::GreaterEqual, ">=", None),
+        test_repl_less: ("<\n", TokenType::Less, "<", None),
+        test_repl_less_equal: ("<=\n", TokenType::LessEqual, "<=", None),
 
         // Number literals
-        repl_zero_int: ("0\n", TokenType::Number, "0", Some(Literal::Number(0.0))),
-        repl_zero_float: ("0.0\n", TokenType::Number, "0.0", Some(Literal::Number(0.0))),
-        repl_one_int: ("1\n", TokenType::Number, "1", Some(Literal::Number(1.0))),
-        repl_one_float: ("1.0\n", TokenType::Number, "1.0", Some(Literal::Number(1.0))),
-        repl_large_int: ("999999\n", TokenType::Number, "999999", Some(Literal::Number(999_999.0))),
-        repl_large_float: ("999999.0\n", TokenType::Number, "999999.0", Some(Literal::Number(999_999.0))),
-        repl_small_float: ("0.0000001\n", TokenType::Number, "0.0000001", Some(Literal::Number(0.000_000_1))),
+        test_repl_zero_int: ("0\n", TokenType::Number, "0", Some(Literal::Number(0.0))),
+        test_repl_zero_float: ("0.0\n", TokenType::Number, "0.0", Some(Literal::Number(0.0))),
+        test_repl_one_int: ("1\n", TokenType::Number, "1", Some(Literal::Number(1.0))),
+        test_repl_one_float: ("1.0\n", TokenType::Number, "1.0", Some(Literal::Number(1.0))),
+        test_repl_large_int: ("999999\n", TokenType::Number, "999999", Some(Literal::Number(999_999.0))),
+        test_repl_large_float: ("999999.0\n", TokenType::Number, "999999.0", Some(Literal::Number(999_999.0))),
+        test_repl_small_float: ("0.0000001\n", TokenType::Number, "0.0000001", Some(Literal::Number(0.000_000_1))),
 
         // String literals
-        repl_single_string: ("\"a\"\n", TokenType::String, "\"a\"", Some(Literal::String("a".to_string()))),
-        repl_multiple_string: ("\"abyz\"\n", TokenType::String, "\"abyz\"", Some(Literal::String("abyz".to_string()))),
-        repl_whitespace_string: ("\" \"\n", TokenType::String, "\" \"", Some(Literal::String(" ".to_string()))),
+        test_repl_single_string: ("\"a\"\n", TokenType::String, "\"a\"", Some(Literal::String("a".to_string()))),
+        test_repl_multiple_string: ("\"abyz\"\n", TokenType::String, "\"abyz\"", Some(Literal::String("abyz".to_string()))),
+        test_repl_whitespace_string: ("\" \"\n", TokenType::String, "\" \"", Some(Literal::String(" ".to_string()))),
 
         // Identifier literals
-        repl_lowercase_single_identifier: ("a\n", TokenType::Identifier, "a", Some(Literal::Identifier("a".to_string()))),
-        repl_uppercase_single_identifier: ("A\n", TokenType::Identifier, "A", Some(Literal::Identifier("A".to_string()))),
-        repl_underscore_single_identifier: ("_\n", TokenType::Identifier, "_", Some(Literal::Identifier("_".to_string()))),
-        repl_lowercase_multiple_identifier: ("abyz\n", TokenType::Identifier, "abyz", Some(Literal::Identifier("abyz".to_string()))),
-        repl_uppercase_multiple_identifier: ("ABYZ\n", TokenType::Identifier, "ABYZ", Some(Literal::Identifier("ABYZ".to_string()))),
-        repl_underscore_multiple_identifier: ("_abyz_ABYZ\n", TokenType::Identifier, "_abyz_ABYZ", Some(Literal::Identifier("_abyz_ABYZ".to_string()))),
+        test_repl_lowercase_single_identifier: ("a\n", TokenType::Identifier, "a", Some(Literal::Identifier("a".to_string()))),
+        test_repl_uppercase_single_identifier: ("A\n", TokenType::Identifier, "A", Some(Literal::Identifier("A".to_string()))),
+        test_repl_underscore_single_identifier: ("_\n", TokenType::Identifier, "_", Some(Literal::Identifier("_".to_string()))),
+        test_repl_lowercase_multiple_identifier: ("abyz\n", TokenType::Identifier, "abyz", Some(Literal::Identifier("abyz".to_string()))),
+        test_repl_uppercase_multiple_identifier: ("ABYZ\n", TokenType::Identifier, "ABYZ", Some(Literal::Identifier("ABYZ".to_string()))),
+        test_repl_underscore_multiple_identifier: ("_abyz_ABYZ\n", TokenType::Identifier, "_abyz_ABYZ", Some(Literal::Identifier("_abyz_ABYZ".to_string()))),
 
         // Keywords
-        repl_and: ("and\n", TokenType::And, "and", None),
-        repl_class: ("class\n", TokenType::Class, "class", None),
-        repl_else: ("else\n", TokenType::Else, "else", None),
-        repl_false: ("false\n", TokenType::False, "false", None),
-        repl_for: ("for\n", TokenType::For, "for", None),
-        repl_fun: ("fun\n", TokenType::Fun, "fun", None),
-        repl_if: ("if\n", TokenType::If, "if", None),
-        repl_nil: ("nil\n", TokenType::Nil, "nil", None),
-        repl_or: ("or\n", TokenType::Or, "or", None),
-        repl_print: ("print\n", TokenType::Print, "print", None),
-        repl_return: ("return\n", TokenType::Return, "return", None),
-        repl_super: ("super\n", TokenType::Super, "super", None),
-        repl_this: ("this\n", TokenType::This, "this", None),
-        repl_true: ("true\n", TokenType::True, "true", None),
-        repl_var: ("var\n", TokenType::Var, "var", None),
-        repl_while: ("while\n", TokenType::While, "while", None),
+        test_repl_and: ("and\n", TokenType::And, "and", None),
+        test_repl_class: ("class\n", TokenType::Class, "class", None),
+        test_repl_else: ("else\n", TokenType::Else, "else", None),
+        test_repl_false: ("false\n", TokenType::False, "false", None),
+        test_repl_for: ("for\n", TokenType::For, "for", None),
+        test_repl_fun: ("fun\n", TokenType::Fun, "fun", None),
+        test_repl_if: ("if\n", TokenType::If, "if", None),
+        test_repl_nil: ("nil\n", TokenType::Nil, "nil", None),
+        test_repl_or: ("or\n", TokenType::Or, "or", None),
+        test_repl_print: ("print\n", TokenType::Print, "print", None),
+        test_repl_return: ("return\n", TokenType::Return, "return", None),
+        test_repl_super: ("super\n", TokenType::Super, "super", None),
+        test_repl_this: ("this\n", TokenType::This, "this", None),
+        test_repl_true: ("true\n", TokenType::True, "true", None),
+        test_repl_var: ("var\n", TokenType::Var, "var", None),
+        test_repl_while: ("while\n", TokenType::While, "while", None),
     }
 
     #[test]
@@ -334,6 +355,201 @@ mod tests {
         let expected = vec![
             Token::new(TokenType::String, lexeme.to_string(), literal, 5),
             Token::new(TokenType::EndOfFile, String::new(), None, 6),
+        ];
+        assert_eq!(tokens, &expected);
+    }
+
+    repl_variable_assignment_single_token_tests! {
+        test_variable_assignment_string: (
+            "var a = \"string\";\n",
+            TokenType::String,
+            "\"string\"",
+            Some(Literal::String("string".to_owned())),
+        ),
+        test_variable_assignment_integer: (
+            "var a = 1;\n",
+            TokenType::Number,
+            "1",
+            Some(Literal::Number(1.0)),
+        ),
+        test_variable_assignment_float: (
+            "var a = 1;\n",
+            TokenType::Number,
+            "1",
+            Some(Literal::Number(1.0)),
+        ),
+        test_variable_assignment_true: (
+            "var a = true;\n",
+            TokenType::True,
+            "true",
+            None,
+        ),
+        test_variable_assignment_false: (
+            "var a = false;\n",
+            TokenType::False,
+            "false",
+            None,
+        ),
+        test_variable_assignment_nil: (
+            "var a = nil;\n",
+            TokenType::Nil,
+            "nil",
+            None,
+        ),
+    }
+
+    #[test]
+    fn test_variable_assignment_negative_int() {
+        let source = "var a = -1;\n";
+        let mut scanner = Scanner::new(source.to_owned());
+        let tokens = scanner.scan_tokens();
+        let expected = vec![
+            Token::new(TokenType::Var, "var".to_owned(), None, 1),
+            Token::new(
+                TokenType::Identifier,
+                "a".to_owned(),
+                Some(Literal::Identifier("a".to_owned())),
+                1,
+            ),
+            Token::new(TokenType::Equal, "=".to_owned(), None, 1),
+            Token::new(TokenType::Minus, "-".to_owned(), None, 1),
+            Token::new(
+                TokenType::Number,
+                "1".to_owned(),
+                Some(Literal::Number(1.0)),
+                1,
+            ),
+            Token::new(TokenType::Semicolon, ";".to_owned(), None, 1),
+            Token::new(TokenType::EndOfFile, String::new(), None, 2),
+        ];
+        assert_eq!(tokens, &expected);
+    }
+
+    #[test]
+    fn test_variable_assignment_negative_float() {
+        let source = "var a = -1.0;\n";
+        let mut scanner = Scanner::new(source.to_owned());
+        let tokens = scanner.scan_tokens();
+        let expected = vec![
+            Token::new(TokenType::Var, "var".to_owned(), None, 1),
+            Token::new(
+                TokenType::Identifier,
+                "a".to_owned(),
+                Some(Literal::Identifier("a".to_owned())),
+                1,
+            ),
+            Token::new(TokenType::Equal, "=".to_owned(), None, 1),
+            Token::new(TokenType::Minus, "-".to_owned(), None, 1),
+            Token::new(
+                TokenType::Number,
+                "1.0".to_owned(),
+                Some(Literal::Number(1.0)),
+                1,
+            ),
+            Token::new(TokenType::Semicolon, ";".to_owned(), None, 1),
+            Token::new(TokenType::EndOfFile, String::new(), None, 2),
+        ];
+        assert_eq!(tokens, &expected);
+    }
+
+    #[test]
+    fn test_variable_assignment_math_expression() {
+        let source = "var a = -1.0 * (2.0 / 3.0) - (4.0 + 5.0);\n";
+        let mut scanner = Scanner::new(source.to_owned());
+        let tokens = scanner.scan_tokens();
+        let expected = vec![
+            Token::new(TokenType::Var, "var".to_owned(), None, 1),
+            Token::new(
+                TokenType::Identifier,
+                "a".to_owned(),
+                Some(Literal::Identifier("a".to_owned())),
+                1,
+            ),
+            Token::new(TokenType::Equal, "=".to_owned(), None, 1),
+            Token::new(TokenType::Minus, "-".to_owned(), None, 1),
+            Token::new(
+                TokenType::Number,
+                "1.0".to_owned(),
+                Some(Literal::Number(1.0)),
+                1,
+            ),
+            Token::new(TokenType::Star, "*".to_owned(), None, 1),
+            Token::new(TokenType::LeftParen, "(".to_owned(), None, 1),
+            Token::new(
+                TokenType::Number,
+                "2.0".to_owned(),
+                Some(Literal::Number(2.0)),
+                1,
+            ),
+            Token::new(TokenType::Slash, "/".to_owned(), None, 1),
+            Token::new(
+                TokenType::Number,
+                "3.0".to_owned(),
+                Some(Literal::Number(3.0)),
+                1,
+            ),
+            Token::new(TokenType::RightParen, ")".to_owned(), None, 1),
+            Token::new(TokenType::Minus, "-".to_owned(), None, 1),
+            Token::new(TokenType::LeftParen, "(".to_owned(), None, 1),
+            Token::new(
+                TokenType::Number,
+                "4.0".to_owned(),
+                Some(Literal::Number(4.0)),
+                1,
+            ),
+            Token::new(TokenType::Plus, "+".to_owned(), None, 1),
+            Token::new(
+                TokenType::Number,
+                "5.0".to_owned(),
+                Some(Literal::Number(5.0)),
+                1,
+            ),
+            Token::new(TokenType::RightParen, ")".to_owned(), None, 1),
+            Token::new(TokenType::Semicolon, ";".to_owned(), None, 1),
+            Token::new(TokenType::EndOfFile, String::new(), None, 2),
+        ];
+        assert_eq!(tokens, &expected);
+    }
+
+    #[test]
+    fn test_variable_assignment_bool_expression() {
+        let source = "var a = !(true == ((1.0 > 2.0) != false);\n";
+        let mut scanner = Scanner::new(source.to_owned());
+        let tokens = scanner.scan_tokens();
+        let expected = vec![
+            Token::new(TokenType::Var, "var".to_owned(), None, 1),
+            Token::new(
+                TokenType::Identifier,
+                "a".to_owned(),
+                Some(Literal::Identifier("a".to_owned())),
+                1,
+            ),
+            Token::new(TokenType::Equal, "=".to_owned(), None, 1),
+            Token::new(TokenType::Bang, "!".to_owned(), None, 1),
+            Token::new(TokenType::LeftParen, "(".to_owned(), None, 1),
+            Token::new(TokenType::True, "true".to_owned(), None, 1),
+            Token::new(TokenType::EqualEqual, "==".to_owned(), None, 1),
+            Token::new(TokenType::LeftParen, "(".to_owned(), None, 1),
+            Token::new(TokenType::LeftParen, "(".to_owned(), None, 1),
+            Token::new(
+                TokenType::Number,
+                "1.0".to_owned(),
+                Some(Literal::Number(1.0)),
+                1,
+            ),
+            Token::new(TokenType::Greater, ">".to_owned(), None, 1),
+            Token::new(
+                TokenType::Number,
+                "2.0".to_owned(),
+                Some(Literal::Number(2.0)),
+                1,
+            ),
+            Token::new(TokenType::RightParen, ")".to_owned(), None, 1),
+            Token::new(TokenType::BangEqual, "!=".to_owned(), None, 1),
+            Token::new(TokenType::False, "false".to_owned(), None, 1),
+            Token::new(TokenType::RightParen, ")".to_owned(), None, 1),
+            Token::new(TokenType::Semicolon, ";".to_owned(), None, 1),
+            Token::new(TokenType::EndOfFile, String::new(), None, 2),
         ];
         assert_eq!(tokens, &expected);
     }
