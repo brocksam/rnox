@@ -1,5 +1,6 @@
 use std::io::Write;
 
+mod environment;
 mod error;
 mod expr;
 mod interpreter;
@@ -52,7 +53,7 @@ fn run(source: &String) -> status::Status {
         }
     };
 
-    let interpreter = interpreter::Interpreter::new(statements);
+    let mut interpreter = interpreter::Interpreter::new(statements);
     let value = interpreter.interpret();
     if let Some(error) = value {
         println!("{}", error);
