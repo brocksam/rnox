@@ -1,11 +1,8 @@
-use crate::{
-    expr::Expr,
-    token::Token,
-};
+use crate::{expr::Expr, literal::Literal};
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Statement {
     Print(Expr),
     Expression(Expr),
-    Variable(Token, Expr),
+    Variable(Literal, Option<Expr>),
 }
