@@ -5,8 +5,7 @@ pub enum Literal {
     Identifier(String),
     Number(f64),
     String(String),
-    False,
-    True,
+    Bool(bool),
     Nil,
 }
 
@@ -15,8 +14,7 @@ impl fmt::Display for Literal {
         match self {
             Self::Identifier(value) | Self::String(value) => write!(f, "{:?}", value),
             Self::Number(value) => write!(f, "{:?}", value),
-            Self::False => write!(f, "false"),
-            Self::True => write!(f, "true"),
+            Self::Bool(value) => write!(f, "{:?}", value),
             Self::Nil => write!(f, "nil"),
         }
     }
