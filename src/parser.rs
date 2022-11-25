@@ -200,10 +200,10 @@ impl Parser {
     // primary -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER ;
     fn primary(&mut self) -> Result<Expr, ParseError> {
         if self.match_token_type(TokenType::False) {
-            return Ok(Expr::Literal(Literal::False));
+            return Ok(Expr::Literal(Literal::Bool(false)));
         }
         if self.match_token_type(TokenType::True) {
-            return Ok(Expr::Literal(Literal::True));
+            return Ok(Expr::Literal(Literal::Bool(true)));
         }
         if self.match_token_type(TokenType::Nil) {
             return Ok(Expr::Literal(Literal::Nil));
@@ -432,8 +432,8 @@ mod tests_parser {
         test_repl_string_whitespace: (TokenType::String, "\" \"", Some(Literal::String(" ".to_owned())), Expr::Literal(Literal::String(" ".to_owned()))),
 
         // Bool
-        test_repl_true: (TokenType::True, "true", None, Expr::Literal(Literal::True)),
-        test_repl_false: (TokenType::False, "false", None, Expr::Literal(Literal::False)),
+        test_repl_true: (TokenType::True, "true", None, Expr::Literal(Literal::Bool(true))),
+        test_repl_false: (TokenType::False, "false", None, Expr::Literal(Literal::Bool(false))),
 
         // Nil
         test_repl_nil: (TokenType::Nil, "nil", None, Expr::Literal(Literal::Nil)),

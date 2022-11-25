@@ -95,8 +95,7 @@ impl Interpreter {
             Literal::Identifier(s) => self.environment.get(s),
             Literal::Number(n) => Ok(Value::Number(*n)),
             Literal::String(s) => Ok(Value::String(s.to_string())),
-            Literal::False => Ok(Value::Bool(false)),
-            Literal::True => Ok(Value::Bool(true)),
+            Literal::Bool(b) => Ok(Value::Bool(*b)),
             Literal::Nil => Ok(Value::Nil),
         }
     }
